@@ -1,0 +1,61 @@
+version: "2"
+services:
+  nginx:
+    image: nginx:alpine
+#    container_name: nginx
+    working_dir: /var/www
+    volumes:
+      - .:/var/www
+      - ./docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - "8080:80"
+    links:
+      - php-fpm
+
+  php-fpm:
+    build: docker/php-fpm
+#    container_name: php-fpm
+    working_dir: /var/www
+    volumes:
+      - .:/var/www
+    links:
+      - mysql
+    environment:
+      - "DB_PORT=3306"
+      - "DB_HOST=mysql"
+    user: ${CURRENT_UID}
+
+  php-cli:
+    build: docker/php-cli
+#    container_name: php-cli
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+    links:
+      - mysql
+    environment:
+      - "DB_PORT=3306"
+      - "DB_HOST=mysql"
+    tty: true
+    user: ${CURRENT_UID}
+
+  node:
+    image: node:latest
+#    container_name: node
+    volumes:
+      - ./:/var/www
+    working_dir: /var/www
+    tty: true
+
+  mysql:
+    image: mysql:5.7
+#    container_name: mysql
+    volumes:
+      - ./var/mysql:/var/lib/mysql
+    environment:
+      - "MYSQL_ROOT_PASSWORD=secret"
+      - "MYSQL_USER=app"
+      - "MYSQL_PASSWORD=secret"
+      - "MYSQL_DATABASE=app"
+    ports:
+      - "33061:3306"
